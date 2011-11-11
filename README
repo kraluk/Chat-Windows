@@ -1,0 +1,4 @@
+--Pliki projektów na Sieci komputerowe
+
+win_client.c - klient (sockets) dla Windows
+win_server.c - serwer (sockets) dla Windows
