@@ -78,7 +78,6 @@ int main( int argc, char** argv )
 	gotoxy( 0, 13 );
 	
 	
-//-----NADAWANIE----
 	unsigned char out_buffer[BUFFER_SIZE];
 	
 	int k1 = 0;
@@ -88,6 +87,9 @@ int main( int argc, char** argv )
 	char a;
 	
 	MMSG nad;
+	
+	
+//-----NADAWANIE-START---------------------------------
 	
 	while( 1 )
 	{
@@ -106,15 +108,13 @@ int main( int argc, char** argv )
 		
 		while( (a=getch()) != 13 )
 		{
-			//out_buffer[k1++] = a;
 			nad.buffer[nad.len++] = a;
 			printf( "%c", a );
         }
  
-		//result = sendto( socket_descr, out_buffer, 4, 0, (LPSOCKADDR)&client_addr, sizeof( client_addr ) );
 		result = sendto( socket_descr, (void *) & nad, sizeof( nad ), 0, (LPSOCKADDR)&client_addr, sizeof( client_addr ) );
 		
-		LeaveCriticalSection( &sekcja );
+		//LeaveCriticalSection( &sekcja );
 		
 		k1 = 0;
 
@@ -127,7 +127,11 @@ int main( int argc, char** argv )
 		}
 		else
 			InterlockedIncrement( &counter2 );
+			
+		LeaveCriticalSection( &sekcja );
 	}
+	
+//-----NADAWANIE-STOP----------------------------------
 	
 	result = WSACleanup();
 	
@@ -152,6 +156,9 @@ DWORD WINAPI odbiorca( void* v )
 	
 	MMSG odb;
 	
+	
+//-----ODBIERANIE-START---------------------------------
+	
 	while( 1 )
 	{
 		Sleep( 100 );	
@@ -172,12 +179,12 @@ DWORD WINAPI odbiorca( void* v )
 				}
 			
 				gotoxy( 0, 0+counter1 );
-				//printf( "Ktos: %c%c%c%c\n", in_buffer[0], in_buffer[1], in_buffer[2], in_buffer[3] );
+
 				printf( "Ktos: " );
 				for( k1 = 0; k1<odb.len; k1++ )
 					printf( "%c", odb.buffer[k1] );
 				
-				LeaveCriticalSection( &sekcja );
+				//LeaveCriticalSection( &sekcja );
 			}
 	
 			if( counter1==10 )
@@ -189,11 +196,17 @@ DWORD WINAPI odbiorca( void* v )
 			}
 			else
 				InterlockedIncrement( &counter1 );
+				
+			LeaveCriticalSection( &sekcja );
 		}
 	}
 	
+//-----NADAWANIE-STOP----------------------------------
+	
 	return 1;
 }
+
+//-----Implementacja funkcji gotoxy(x, y)
 
 void gotoxy( int x, int y )
 {
@@ -204,6 +217,7 @@ void gotoxy( int x, int y )
 	SetConsoleCursorPosition( GetStdHandle(STD_OUTPUT_HANDLE), coord );
 }
 
+//-----Implementacja funkcji czyszczącej linię
 void clearline( int y )
 {
 	int k1;

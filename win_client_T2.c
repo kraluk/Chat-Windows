@@ -98,12 +98,13 @@ int main( int argc, char** argv )
 	
 	MMSG nad;
 	
+	
+//-----NADAWANIE-START---------------------------------
+
 	while(1)
 	{
 		Sleep( 100 );
 		nad.len = 0;
-
-//--------------------------------------------
 
 		while( !TryEnterCriticalSection( &sekcja ) )
 		{
@@ -117,16 +118,14 @@ int main( int argc, char** argv )
 		
 		while( (a=getch()) != 13 )
 		{
-			//out_buffer[k1++]=a;
 			nad.buffer[nad.len++] = a;
 			printf( "%c", a );
         }
 		
-		LeaveCriticalSection( &sekcja );
+		//LeaveCriticalSection( &sekcja );
 		
 		k1 = 0;
 
-		//result = sendto( socket_descr, out_buffer, 4, 0, (LPSOCKADDR)&serv_addr, sizeof( serv_addr ) );
 		result = sendto( socket_descr, (void*) & nad, sizeof( nad ), 0, (LPSOCKADDR)&serv_addr, sizeof( serv_addr ) );
 
 		/*if( result == SOCKET_ERROR )
@@ -150,9 +149,11 @@ int main( int argc, char** argv )
 		}
 		else
 			InterlockedIncrement( &counter2 );
-		
-//--------------------------------------------
+			
+		LeaveCriticalSection( &sekcja );
 	}
+	
+//-----NADAWANIE-STOP----------------------------------
 
 	result = WSACleanup();
 
@@ -175,6 +176,9 @@ DWORD WINAPI odbiorca( void* v )
 	char c = ' ';
 	
 	MMSG odb;
+
+
+//-----ODBIERANIE-START---------------------------------
 	
 	while( 1 )
 	{
@@ -202,7 +206,7 @@ DWORD WINAPI odbiorca( void* v )
 				for( k1 = 0; k1<odb.len; k1++ )
 					printf( "%c", odb.buffer[k1]);
 			
-				LeaveCriticalSection( &sekcja );
+				//LeaveCriticalSection( &sekcja );
 			}
 	
 			if( counter1==10 )
@@ -214,12 +218,17 @@ DWORD WINAPI odbiorca( void* v )
 			}
 			else
 				InterlockedIncrement( &counter1 );
+				
+			LeaveCriticalSection( &sekcja );
 		}
 	}
+	
+//-----NADAWANIE-STOP----------------------------------
 	
 	return 1;
 }
 
+//-----Implementacja funkcji gotoxy(x, y)
 void gotoxy( int x, int y )
 {
 	COORD coord;
@@ -229,6 +238,7 @@ void gotoxy( int x, int y )
 	SetConsoleCursorPosition( GetStdHandle(STD_OUTPUT_HANDLE), coord );
 }
 
+//-----Implementacja funkcji czyszczącej linię
 void clearline( int y )
 {
 	int k1;
