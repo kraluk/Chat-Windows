@@ -31,11 +31,16 @@ void gotoxy( int, int );
 void clearline( int );
 
 
+typedef struct mmsg
+{
+	char buffer[BUFFER_SIZE];
+	int len;
+} MMSG;
+
+
 int main( int argc, char** argv )
 {
-	//SOCKET      socket_descr;
 	SOCKADDR_IN my_addr;
-	//SOCKADDR_IN serv_addr;
 	HANDLE hWatek;
 
 	unsigned char in_buffer[BUFFER_SIZE];
@@ -45,7 +50,6 @@ int main( int argc, char** argv )
 	int error; 
 	int result = -1; 
 	int level;
-	//int serv_addr_size; // = sizeof( serv_addr );
 	char key;
 
 	result = WSAStartup( WS_VERSION_REQD, &stWSAData );
@@ -70,7 +74,7 @@ int main( int argc, char** argv )
 		error = WSAGetLastError();
 		printf( "bind - error=%d\n", error );
 		getch();
-		//exit(0);
+		//return 1;
     }
 
 
@@ -92,14 +96,12 @@ int main( int argc, char** argv )
 	char c = ' ';
 	char a;
 	
+	MMSG nad;
+	
 	while(1)
 	{
-		Sleep(500);
-
-		//out_buffer[0] = 'A';
-		//out_buffer[1] = 'B';
-		//out_buffer[2] = 'C';
-		//out_buffer[3] = 'D';
+		Sleep( 100 );
+		nad.len = 0;
 
 //--------------------------------------------
 
@@ -115,15 +117,17 @@ int main( int argc, char** argv )
 		
 		while( (a=getch()) != 13 )
 		{
-			out_buffer[k1++]=a;
-			printf("%c",a);
+			//out_buffer[k1++]=a;
+			nad.buffer[nad.len++] = a;
+			printf( "%c", a );
         }
 		
 		LeaveCriticalSection( &sekcja );
 		
-		k1=0;
+		k1 = 0;
 
-		result = sendto( socket_descr, out_buffer, 4, 0, (LPSOCKADDR)&serv_addr, sizeof( serv_addr ) );
+		//result = sendto( socket_descr, out_buffer, 4, 0, (LPSOCKADDR)&serv_addr, sizeof( serv_addr ) );
+		result = sendto( socket_descr, (void*) & nad, sizeof( nad ), 0, (LPSOCKADDR)&serv_addr, sizeof( serv_addr ) );
 
 		/*if( result == SOCKET_ERROR )
 		{
@@ -148,22 +152,6 @@ int main( int argc, char** argv )
 			InterlockedIncrement( &counter2 );
 		
 //--------------------------------------------
-
-
-		/*result = recvfrom( socket_descr, in_buffer, 4, 0, (LPSOCKADDR)&serv_addr, &serv_addr_size );
-
-		if( result == SOCKET_ERROR )
-		{
-			error = WSAGetLastError();
-			printf("recvfrom, error=%d\n", error);
-			//exit(0);
-		}
-		else
-		{
-			printf( "Odebrano od serwera: %4s\n", in_buffer );
-		}*/
-
-
 	}
 
 	result = WSACleanup();
@@ -186,40 +174,47 @@ DWORD WINAPI odbiorca( void* v )
 	
 	char c = ' ';
 	
+	MMSG odb;
+	
 	while( 1 )
 	{
-		Sleep( 400 );
+		Sleep( 100 );
 		
-		result = recvfrom( socket_descr, in_buffer, 4, 0, (SOCKADDR *) & serv_addr, &serv_addr_size );
-	
-		if( result == SOCKET_ERROR )
+		while( (result = recvfrom( socket_descr, (void*) & odb, sizeof( odb ), 0, (SOCKADDR *) & serv_addr, &serv_addr_size )) > 0 )
 		{
-			error = WSAGetLastError();
-			//printf( "recvfrom, error=%d\n", error );
-		}
-		else
-		{	
-			while( !TryEnterCriticalSection( &sekcja ) )
+			if( result == SOCKET_ERROR )
 			{
-				continue;
-				Sleep( 1 );
+				error = WSAGetLastError();
+				//printf( "recvfrom, error=%d\n", error );
 			}
+			else
+			{	
+				while( !TryEnterCriticalSection( &sekcja ) )
+				{
+					continue;
+					Sleep( 1 );
+				}
 			
-			gotoxy( 0, 0+counter1 );
-			printf( "Ktos: %c%c%c%c\n", in_buffer[0], in_buffer[1], in_buffer[2], in_buffer[3] );
-			LeaveCriticalSection( &sekcja );
-		}
-	
-		if( counter1==10 )
-		{
-			for( k1=0; k1<=10; k1++ )
-			{
-				clearline( k1 );
+				gotoxy( 0, 0+counter1 );
+				//printf( "Ktos: %c%c%c%c\n", in_buffer[0], in_buffer[1], in_buffer[2], in_buffer[3] );
+			
+				printf( "Ktos: " );
+				for( k1 = 0; k1<odb.len; k1++ )
+					printf( "%c", odb.buffer[k1]);
+			
+				LeaveCriticalSection( &sekcja );
 			}
-			counter1 = 0;
+	
+			if( counter1==10 )
+			{
+				for( k1=0; k1<=10; k1++ )
+					clearline( k1 );
+					
+				counter1 = 0;
+			}
+			else
+				InterlockedIncrement( &counter1 );
 		}
-		else
-			InterlockedIncrement( &counter1 );
 	}
 	
 	return 1;
