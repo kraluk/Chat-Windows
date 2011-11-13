@@ -1,4 +1,9 @@
---Pliki projekt�w na Sieci komputerowe
+--LanChat dla Windows
 
-win_client.c - klient (sockets) dla Windows
-win_server.c - serwer (sockets) dla Windows
+win_client.c - klient - wersja pierwotna
+win_server.c - serwer - wersja pierwotna
+
+win_server_T.c - serwer w wersji "śmieciowej"
+
+win_client_T2.c - klient w wersji z wątkiem (komunikacja obustronna)
+win_server_T2.c - serwer w wersji z wątkiem (komunikacja obustronna)
